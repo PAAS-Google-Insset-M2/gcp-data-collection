@@ -158,8 +158,8 @@ To calculate the schedule parameter value:
 
 ### Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com <br />
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Sharonn - email@example.com <br />
+Project Link: [https://github.com/PAAS-Google-Insset-M2/gcp-data-collection](https://github.com/PAAS-Google-Insset-M2/gcp-data-collection)
 
 <!-- ACKNOWLEDGMENTS -->
 ### Acknowledgments
