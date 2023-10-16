@@ -105,7 +105,7 @@ gcloud functions deploy python-get-velo-lib-data-function \
 --env-vars-file=.env.yaml \
 --retry
 
-# gcloud functions deploy python-get-velo-lib-data-function --gen2 --runtime=python311 --region=europe-west9 --source=. --entry-point=get_data --trigger-topic=velo-lib-amiens-topic --env-vars-file=.env.yaml --retry
+# gcloud functions deploy python-get-velo-lib-data-function --gen2 --runtime=python311 --memory 128Mi --region=europe-west9 --source=. --entry-point=get_data --trigger-topic=velo-lib-amiens-topic --env-vars-file=.env.yaml --retry
 
 # Triggering the function
 gcloud pubsub topics publish velo-lib-amiens-topic --message="Friend"
@@ -126,11 +126,33 @@ gcloud functions delete python-get-velo-lib-data-function --gen2 --region europe
 
 ```shell
 # Enable APIs
-gcloud services enable cloudscheduler.googleapis.com pubsub.googleapis.com
+gcloud services enable cloudscheduler.googleapis.com
+
+# Create a scheduler with a pubsub target - It launches every minute
+gcloud scheduler jobs create pubsub velo-lib-amiens-job --location=europe-west3 --schedule="* * * * *" --topic=velo-lib-amiens-topic --message-body="Friend"
+```
+
+Add the permission <br/>
+PERMISSION_DENIED: The principal (user or service account) lacks IAM permission "cloudscheduler.jobs.create" for the resource "projects/paas-gcp-insset-2023/locations/europe-west9" (or the resource may not exist).
+
+
+To calculate the schedule parameter value:
+```shell
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of the month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday;
+# │ │ │ │ │                                   7 is also Sunday on some systems)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * * <command to execute>
 ```
 
 ### Deploy the project
 <!-- Add total cost / month -->
+
+  #### General cost
 
 #### To stop the running function
 
@@ -147,4 +169,5 @@ Helpful resources!
 * [Create bucket on GCP](https://cloud.google.com/storage/docs/creating-buckets#create_a_new_bucket)
 * [Deploy function](https://cloud.google.com/functions/docs/create-deploy-gcloud)
 * [JCDecaux documentation](https://developer.jcdecaux.com/#/opendata/vls?page=dynamic)
+* [CRON Overview](https://en.wikipedia.org/wiki/Cron#Overview)
 
