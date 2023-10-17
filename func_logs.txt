@@ -1,0 +1,21 @@
+LEVEL  NAME                               TIME_UTC                 LOG
+       python-get-velo-lib-data-function  2023-10-17 15:04:02.614  velo-data_2023-10-17_15-04-01.json with contents uploaded to velo-lib-amiens.
+       python-get-velo-lib-data-function  2023-10-17 15:04:01.373  Successfully fetched the data
+       python-get-velo-lib-data-function  2023-10-17 15:04:00.165  Hello, Friend!
+I      python-get-velo-lib-data-function  2023-10-17 15:04:00.152
+       python-get-velo-lib-data-function  2023-10-17 15:03:02.612  velo-data_2023-10-17_15-03-01.json with contents uploaded to velo-lib-amiens.
+       python-get-velo-lib-data-function  2023-10-17 15:03:01.261  Successfully fetched the data
+       python-get-velo-lib-data-function  2023-10-17 15:03:00.142  Hello, Friend!
+I      python-get-velo-lib-data-function  2023-10-17 15:03:00.129
+       python-get-velo-lib-data-function  2023-10-17 15:02:02.617  velo-data_2023-10-17_15-02-01.json with contents uploaded to velo-lib-amiens.
+       python-get-velo-lib-data-function  2023-10-17 15:02:01.285  Successfully fetched the data
+       python-get-velo-lib-data-function  2023-10-17 15:02:00.161  Hello, Friend!
+I      python-get-velo-lib-data-function  2023-10-17 15:02:00.096
+       python-get-velo-lib-data-function  2023-10-17 15:01:02.661  velo-data_2023-10-17_15-01-01.json with contents uploaded to velo-lib-amiens.
+       python-get-velo-lib-data-function  2023-10-17 15:01:01.286  Successfully fetched the data
+       python-get-velo-lib-data-function  2023-10-17 15:01:00.081  Hello, Friend!
+I      python-get-velo-lib-data-function  2023-10-17 15:01:00.069
+I      python-get-velo-lib-data-function  2023-10-17 15:00:07.786  Default STARTUP TCP probe succeeded after 1 attempt for container "python--get--velo--lib--data--function-1" on port 8080.
+       python-get-velo-lib-data-function  2023-10-17 15:00:04.316  velo-data_2023-10-17_15-00-02.json with contents uploaded to velo-lib-amiens.
+       python-get-velo-lib-data-function  2023-10-17 15:00:02.474  Successfully fetched the data
+       python-get-velo-lib-data-function  2023-10-17 15:00:01.076  Hello, Friend!
