@@ -1,2 +1,6 @@
 .env
 env/
+
+imgs/
+.git/
+.idea/

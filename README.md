@@ -14,7 +14,7 @@
     <li><a href="#cloud-pub-sub">CLoud Pub/Sub</a></li>
     <li><a href="#cloud-function">Cloud Function</a></li>
     <li><a href="#cloud-scheduler">Cloud Scheduler</a></li>
-    <li><a href="#deploy-the-project">Run the project</a></li>
+    <li><a href="#deploy-the-project-cost">Cost of project deployment</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
@@ -37,12 +37,14 @@ a station
 and the availability of the bicycles in a station. It will advise its users whether they should wait for a bicycle or
 should go and check another at station.
 
-We are focusing on the stations in Amiens (45098, France). The service is named **Velam**.
+We are focusing on the stations in Amiens (80000, 80080, 80090, France). The service is named **Velam**.
 
 For this part I am using python as programming language.
 
 We are using the [JCDecaux API](https://developer.jcdecaux.com/#/opendata/vls?page=getstarted) for the data on the velo
 lib stations.
+
+We will be storing data for ***1 month***.
 
 > For calling their API, you have to use the following request with the corresponding
 > information: ```GET https://api.jcdecaux.com/vls/v1/stations?contract={contract_name}&apiKey={api_key}``` <br/>
@@ -96,9 +98,51 @@ gcloud services enable cloudresourcemanager.googleapis.com pubsub.googleapis.com
 
 ## Cloud Storage (Bucket)
 
-A bucket is ...
+A bucket is a container storing the data. It's used for storage and helps organize our data.
+
+It can store pretty much anything: ```text (.txt, .json, ...), media (images, videos,...)```
+
+There is no limit to the number of buckets you can have in a project or location.
+
+You have to keep in mind that **Every bucket name must be globally (worldwide) unique**.
 
 While creating one, we can specify the project, the location and the storage class.
+
+#### Finding information on JCDecaux's API
+
+```shell
+# We have to determine the location of the JCDecaux's API to choose the best location
+# In order to reduce, mainly, the cost of networking (request done by the cloud function to fetch the data)
+
+# Get the API address
+❯ nslookup api.jcdecaux.com
+Server:         127.0.0.53
+Address:        127.0.0.53#53
+
+Non-authoritative answer:
+Name:   api.jcdecaux.com
+Address: 213.41.121.149
+Name:   api.jcdecaux.com
+Address: 213.41.121.85
+
+# Get info on the API address
+❯ curl https://ipinfo.io/213.41.121.149
+{
+  "ip": "213.41.121.149",
+  "city": "Paris",
+  "region": "Île-de-France",
+  "country": "FR",
+  "loc": "48.8534,2.3488",
+  "org": "AS8220 COLT Technology Services Group Limited",
+  "postal": "75000",
+  "timezone": "Europe/Paris",
+  "readme": "https://ipinfo.io/missingauth"
+}
+
+# Their API is in Paris so we will use "europe-west9" as location when it is possible because some gcp services might not be available in this location.
+```
+
+![Info on JCDecaux's API address](./imgs/ip_info.png "Info on JCDecaux's API address")
 
 My bucket name is: ***velo-lib-amiens*** <br/>
 I chose the location: ***EUROPE-WEST9*** (located in Paris) which is the closest location to where JCDecaux stores their
@@ -119,7 +163,9 @@ gcloud storage buckets create gs://velo-lib-amiens --project=$(gcloud config get
 
 ## CLoud Pub/Sub
 
-The Pub/Sub service is ...
+The Pub/Sub service is an asynchronous and scalable messaging service that decouples services producing messages from
+services processing those messages. <br/>
+It allows services to communicate asynchronously.
 
 For the data collection, we will use it to trigger the function that will fetch the data.
 
@@ -206,6 +252,9 @@ Paris) location.
 
 The scheduler will run the pubsub sending message line every ***one*** minute.
 
+I chose **1 minute** as the scheduler frequency because it is said in JCDecaux's documentation that the data is updated
+every minute.
+
 ```shell
 # Create a scheduler with a pubsub target - It launches every minute
 # gcloud scheduler jobs create pubsub <scheduler_name> --location=<location> --schedule="* * * * *" --topic=<topic_id> --message-body=<message>
@@ -229,13 +278,134 @@ To calculate the schedule parameter value:
 
 <small> <em><u>Source:</u> <a href="https://en.wikipedia.org/wiki/Cron#Overview">CRON by Wikipedia</a> </em> </small>
 
-### Deploy the project (Cost)
+## Deploy the project (Cost)
 
-The cost ...
+We all have for starters: **$50** for the billing of this project.
+
+We have to make sure that everything we are doing now and all the services that we are using will not cost more than $50
+after one month.
+
+Thus, we have to calculate the cost of every service used.
+
+#### Determination of the number of API calls in 1 month
+
+I chose a frequency of 1 minute to fetch the data. A call to the API will then be performed every minute
+***(60 calls/hour)***.
+
+In 1 month, we will have (approximately): ***(60/1)x(24)x(31)*** = **44640 calls**.
+
+I say *approximately* because I didn't run the function on the first day of the month, and I am not sure whether the
+next séance is actually the 31st day after the launch of the function. It can then be more/less than 44640 calls. I'm
+basing the further calculations on 44640 calls.
+
+#### Cloud Storage (bucket)
+
+- The data storage price depends on the bucket location and on the bucket storage class. You pay per stored GB/month.
+- For me, the data is stored in the *europe-west9/Paris* location and the bucket is a *STANDARD* class.
+
+  |       Location       | Standard storage | Nearline storage | Coldline storage | Archive storage |
+  |:--------------------:|:----------------:|:----------------:|:----------------:|:---------------:|
+  | Paris (europe-west9) |      $0.023      |      $0.013      |      $0.006      |     $0.0025     |
+
+- A single call to the JCDecaux API results in an **8.8KB** JSON file stored in the bucket.
+
+![Bucket details](./imgs/bucket_data.png "Bucket details")
+
+```python
+kb_per_month = 8.8 * 44640  # 392832
+gb_per_month = kb_per_month / 1000000  # 0.392832
+
+# We then have 0.392832 GB / month
+cost = gb_per_month * 0.023  # $0.009035136 /month
+```
+
+- The approximate cost: **$0.009,035,136/month** (0,009 035 136 €)
+
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/storage/pricing#europe">Cloud Storage Pricing</a> </em> </small>
+
+#### Pub/Sub cost
+
+- It is mentioned on the gcp pub/sub pricing page that
+  ***All customers get up to 10 GB for ingestion or delivery of messages free per month, not charged against your
+  credits.
+  pricing is calculated based upon monthly data volumes.*** <br/>
+  So, the first **10 GB** of data per month is offered at no charge. And beyond 10GB, you will pay $40.00/TB
+- We are using the pubsub to trigger the cloud function fetching and storing the data in a bucket. We are not storing
+  anything in the pubsub we will then consume 0o/month which result in $0/month.
+- The cost: **$0/month** (0 €)
+
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/pubsub#section-10">Pub/Sub Pricing</a> </em> </small>
+
+#### Cloud Function cost
+
+###### API calls cost (Invocations)
+
+It is mentioned on the gcp cloud function pricing page that the ***first 2 million calls are free***. <br/>
+We are calling the API, approximately, 44640 times per month. Beyond 20 million calls, you will have to pay
+$0.40/million. <br/>
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/functions/pricing#invocations">Cloud Function
+Invocations Pricing</a> </em> </small>
+
+###### Compute time cost
+
+Fees for compute time are variable based on the amount of memory and CPU provisioned for the function. <br/>
+My cloud function has 128 Mb of memory.
+
+| Memory |   	vCPU1   | 	Price/100ms (Tier 1 Price) | 	Price/100ms (Tier 2 Price) |
+|:------:|:----------:|:---------------------------:|:---------------------------:|
+| 128MB  | 	.083 vCPU |        	$0.000000231        |        	$0.000000324        |
+
+An execution can be (worst case): around 2,7s
+
+```python
+worst_exec = 27 * 0.000000231  # $0.0000006237 for worst execution time
+
+cost = worst_exec * 44640  # $0.27,841,968
+```
+
+The execution time cost is: approximately **$0.27,841,968/month** (0,27841968 €)
+
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/functions/pricing#compute_time">Cloud Function Compute Time Pricing</a> </em> </small>
+
+###### Eventarc cost
+
+Eventarc is used by the 2nd gen cloud functions for managing events. <br/>
+It is mentioned on the gcp pub/sub pricing page that
+***The first 50,000 chargeable events in every calendar month are Free***. <br/>
+We are emitting 44640 events/month which result in **$0/month**. <br/>
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/eventarc/pricing#eventarc-pricing">Eventarc
+Pricing</a> </em> </small>
+
+The cloud function cost: **$0.27,841,968/month** (0,27841968 €)
+
+There is an example of calculation for a simple event-driven function on gcp cloud function pricing
+page: [Simple event-driven function](https://cloud.google.com/functions/pricing#simple_event-driven_function)
+
+#### Cloud Scheduler cost
+
+- For the Cloud Scheduler, the pricing is based on the number of jobs that you have. Though, there is a free tier.
+- It is mentioned on the gcp cloud scheduler pricing page that
+  ***Each Google billing account gets 3 jobs per month free. Note that the free tier is measured at the account level
+  not the project level.*** <br/> If you have more than 3 jobs, you will have to pay: ***$0.10 per job per month***
+- We only have **1 job**
+- The cost: **$0/month**
+
+<small> <em> <u>Source:</u> <a href="https://cloud.google.com/scheduler/pricing">Cloud Scheduler Pricing</a> </em> </small>
+
+### General cost
+
+- Calcul: ```general_cost = 0.009035136 + 0.27,841,968 = 0.287454816 ≈ 0.3 ```
+
+- The approximate general cost is: **$0.3/month** (0,3 €)
+  ```mermaid
+  pie title Cost
+         "Available credit" : 50
+         "General cost" : 0.3
+  ```
 
 ### Contact
 
-Sharonn - [LinkedIn]() <br />
+Sharonn - [LinkedIn](https://linkedin.com/in/sharonn-5501251a5) <br />
 Project
 link: [https://github.com/PAAS-Google-Insset-M2/gcp-data-collection](https://github.com/PAAS-Google-Insset-M2/gcp-data-collection)
 
