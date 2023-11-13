@@ -3,14 +3,16 @@ import json
 import os
 from datetime import datetime
 
+import functions_framework
 import requests
+from cloudevents.http import CloudEvent
 from dotenv import load_dotenv
 from google.cloud import storage
 
-from cloudevents.http import CloudEvent
-import functions_framework
-
 load_dotenv()
+
+# gcloud_app_credentials = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./paas-gcp-insset-2023-301962e7807a.json"
 
 api_key = os.environ.get("JCDECAUX_API_KEY")
 
@@ -21,6 +23,8 @@ bucket_name = os.environ.get("BUCKET_NAME")
 
 # Default, timeout = 5 seconds
 timeout = int(os.environ.get("TIMEOUT", "5"))
+
+empty_data = []
 
 
 def write_in_bucket(contents):
@@ -34,7 +38,8 @@ def write_in_bucket(contents):
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     if contents is None:
-        blob.upload_from_string(None)
+        # blob.upload_from_string(None)
+        blob.upload_from_string(json.dumps(empty_data), content_type="application/json")
     else:
         blob.upload_from_string(json.dumps(contents), content_type="application/json")
 
